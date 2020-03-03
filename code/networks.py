@@ -4,7 +4,7 @@ from keras.models import Model
 from keras.layers import Conv2D, Dense, Activation, Input, UpSampling2D
 from keras.layers import concatenate, Flatten, Reshape, Lambda
 from keras.layers import LeakyReLU, MaxPooling2D
-import keras
+import keras as keras
 
 
 def my_conv(x_in, nf, ks=3, strides=1, activation='lrelu', name=None):
@@ -268,7 +268,11 @@ def unet(x_in, pose_in, nf_enc, nf_dec):
 
     for i in range(5):
         out_sz = 8*(2**(i+1))
+        print(x.get_shape())
         x = Lambda(interp_upsampling, output_shape = (out_sz, out_sz, filters[i]))(x)
+        print("@@@@@@@@@@@@@@@@@@@@@@@@@@")
+        print(i, x.get_shape(), skips[i].get_shape())
+        print("@@@@@@@@@@@@@@@@@@@@@@@@@@")
         x = concatenate([x, skips[i]])
         x = my_conv(x, nf_dec[i])
 
@@ -290,8 +294,12 @@ def network_posewarp(param):
     trans_in = Input(shape=(2, 3, n_limbs+1))
 
     # 1. FG/BG separation
+    print("##########################")
+    print(type(src_in), type(pose_src))
+    print(src_in.get_shape(), pose_src.get_shape())
+    print("##########################")
     x = unet(src_in, pose_src, [64]*2 + [128]*9, [128]*4 + [32])
-    src_mask_delta = my_conv(x, 11, activation='linear')
+    src_mask_delta = my_conv(x, 11, activation='linear', name='mask_delta')
     src_mask = keras.layers.add([src_mask_delta, src_mask_prior])
     src_mask = Activation('softmax', name='mask_src')(src_mask)
 

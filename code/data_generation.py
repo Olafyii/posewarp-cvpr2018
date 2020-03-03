@@ -7,6 +7,7 @@ import glob
 
 
 def make_vid_info_list(data_dir):
+    # return [loadedmat, bbox, joints(size of (14, 2, vid_len), vid_name)
     vids = glob.glob(data_dir + '/frames/*')
     n_vids = len(vids)
 
@@ -36,6 +37,7 @@ def get_person_scale(joints):
 
 
 def read_frame(vid_name, frame_num, box, x):
+    # box of size (vid_len, 4), x of size (14, 2, vid_len)
     img_name = os.path.join(vid_name, str(frame_num + 1) + '.jpg')
     if not os.path.isfile(img_name):
         img_name = os.path.join(vid_name, str(frame_num + 1) + '.png')
@@ -57,7 +59,7 @@ def warp_example_generator(vid_info_list, param, do_augment=True, return_pose_ve
     pose_dn = param['posemap_downsample']
     sigma_joint = param['sigma_joint']
     n_joints = param['n_joints']
-    scale_factor = param['obj_scale_factor']
+    scale_factor = param['obj_scale_factor']  # 1.14/dn
     batch_size = param['batch_size']
     limbs = param['limbs']
     n_limbs = param['n_limbs']
@@ -76,6 +78,7 @@ def warp_example_generator(vid_info_list, param, do_augment=True, return_pose_ve
 
             # 1. choose random video.
             vid = np.random.choice(len(vid_info_list), 1)[0]
+            # return [loadedmat, bbox(size of (vid_len, 4)), joints(size of (14, 2, vid_len), vid_name)
 
             vid_bbox = vid_info_list[vid][1]
             vid_x = vid_info_list[vid][2]
@@ -87,7 +90,7 @@ def warp_example_generator(vid_info_list, param, do_augment=True, return_pose_ve
             while abs(frames[0] - frames[1]) / (n_frames * 1.0) <= 0.02:
                 frames = np.random.choice(n_frames, 2, replace=False)
 
-            I0, joints0, scale0, pos0 = read_frame(vid_path, frames[0], vid_bbox, vid_x)
+            I0, joints0, scale0, pos0 = read_frame(vid_path, frames[0], vid_bbox, vid_x)  # vid_x of size (14, 2, vid_len)
             I1, joints1, scale1, pos1 = read_frame(vid_path, frames[1], vid_bbox, vid_x)
 
             if scale0 > scale1:
@@ -138,6 +141,7 @@ def warp_example_generator(vid_info_list, param, do_augment=True, return_pose_ve
 
 def create_feed(params, data_dir, mode, do_augment=True, return_pose_vectors=False, transfer=False):
     vid_info_list = make_vid_info_list(data_dir + '/' + mode)
+    # vid_info.append([info, box, x, vids[i]])
 
     if transfer:
         feed = transfer_example_generator(ex_list, ex_list, params)

@@ -42,3 +42,11 @@ def vgg_norm():
         model.layers[i].set_weights(weights)
 
     return model
+
+
+if __name__ == '__main__':
+    model = vgg_norm()
+    model.summary()
+    print("#####################################################")
+    model_orig = VGG19(weights='imagenet', input_shape=(256, 256, 3), include_top=False)
+    model_orig.summary() 
